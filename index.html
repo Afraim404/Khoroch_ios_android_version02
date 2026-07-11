@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Khoroch — Daily Expense Ledger</title>
+<meta name="description" content="Offline daily expense tracker with categories, budgets and charts">
+<meta name="theme-color" content="#14181C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Khoroch">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="eyebrow">Daily Ledger</span>
+    <h1><span class="k">Kho</span>roch</h1>
+  </div>
+  <div class="month-picker">
+    <button id="prevMonth" aria-label="Previous month">‹</button>
+    <span id="monthLabel">—</span>
+    <button id="nextMonth" aria-label="Next month">›</button>
+  </div>
+</div>
+
+<main>
+  <div class="install-banner" id="installBanner">
+    <span>Install Khoroch on your home screen to use it offline.</span>
+    <button id="installBtn">Install</button>
+  </div>
+
+  <div class="summary-card">
+    <div class="gauge">
+      <svg viewBox="0 0 100 100">
+        <circle class="gauge-track" cx="50" cy="50" r="42"></circle>
+        <circle class="gauge-fill" id="gaugeFill" cx="50" cy="50" r="42" stroke-dasharray="263.9" stroke-dashoffset="263.9"></circle>
+      </svg>
+      <div class="gauge-label">
+        <b id="gaugePct">0%</b>
+        <small>OF BUDGET</small>
+      </div>
+    </div>
+    <div class="summary-text">
+      <div class="spent-label">Spent this month</div>
+      <div class="spent-amt">৳<span id="monthTotal">0</span></div>
+      <div class="budget-line" id="budgetLine">No budget set</div>
+      <button class="set-budget-btn" id="setBudgetBtn">Set monthly budget</button>
+    </div>
+  </div>
+
+  <div class="balance-row">
+    <div class="balance-stat income">
+      <div class="lbl">Income</div>
+      <div class="val" id="statIncome">0</div>
+    </div>
+    <div class="balance-stat expense">
+      <div class="lbl">Expenses</div>
+      <div class="val" id="statExpense">0</div>
+    </div>
+    <div class="balance-stat net">
+      <div class="lbl">Net</div>
+      <div class="val" id="statNet">0</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="expenses">Expenses</div>
+    <div class="tab income-tab" data-tab="income">Income</div>
+    <div class="tab" data-tab="insights">Insights</div>
+    <div class="tab" data-tab="export">Export</div>
+  </div>
+
+  <section class="panel active" id="panel-expenses">
+    <div id="entriesList"></div>
+  </section>
+
+  <section class="panel" id="panel-income">
+    <div id="incomeList"></div>
+  </section>
+
+  <section class="panel" id="panel-insights">
+    <div class="chart-card">
+      <h3>Income vs expenses</h3>
+      <div class="sub" id="compareSub">Last 6 months</div>
+      <canvas id="compareChart" width="440" height="190"></canvas>
+      <div class="legend">
+        <div class="li"><span class="dot" style="background:var(--income)"></span>Income</div>
+        <div class="li"><span class="dot" style="background:var(--gold)"></span>Expenses</div>
+      </div>
+      <div class="sub" id="netSummary" style="margin-top:12px;"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Category breakdown</h3>
+      <div class="sub" id="donutSub">This month</div>
+      <canvas id="donutChart" width="280" height="220"></canvas>
+      <div class="legend" id="donutLegend"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Where the money went</h3>
+      <div class="sub">Ranked by total, this month</div>
+      <div id="catRows"></div>
+    </div>
+    <div class="chart-card">
+      <h3>6-month spending trend</h3>
+      <div class="sub">Total spend per month</div>
+      <canvas id="trendChart" width="440" height="180"></canvas>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-export">
+    <div class="chart-card">
+      <h3>Export your data</h3>
+      <div class="sub">Everything stays on your phone — export makes a copy you control.</div>
+      <div class="export-row">
+        <button class="export-btn" id="exportCsv"><span class="ic">⬇</span>CSV</button>
+        <button class="export-btn" id="exportJson"><span class="ic">⬇</span>JSON</button>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Import</h3>
+      <div class="sub">Restore from a previously exported JSON file.</div>
+      <input type="file" id="importFile" accept="application/json" style="color:var(--text-dim); font-size:12.5px;">
+    </div>
+    <div class="chart-card">
+      <h3>Category budgets</h3>
+      <div class="sub">Optional monthly caps per category, shown as progress bars above.</div>
+      <div id="catBudgetRows"></div>
+    </div>
+    <div class="chart-card">
+      <h3>Manage categories</h3>
+      <div class="sub">Custom expense categories you've added.</div>
+      <div id="manageCats"></div>
+      <button class="add-tag-btn" id="addCatFromExport">+ New category</button>
+    </div>
+    <div class="chart-card">
+      <h3>Manage income sources</h3>
+      <div class="sub">Custom income sources you've added.</div>
+      <div id="manageSources"></div>
+      <button class="add-tag-btn" id="addSourceFromExport">+ New income source</button>
+    </div>
+    <button class="danger-btn" id="wipeBtn">Erase all data on this device</button>
+  </section>
+</main>
+
+<button class="fab" id="fabAdd" aria-label="Add expense">+</button>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+
+<div class="sheet" id="addSheet">
+  <div class="sheet-handle"></div>
+  <h2>Add expense</h2>
+  <div class="field">
+    <label>Amount</label>
+    <div class="amt-input-wrap">
+      <span class="cur"></span>
+      <input type="number" inputmode="decimal" id="amtInput" placeholder="0" min="0" step="0.01">
+    </div>
+  </div>
+  <div class="field">
+    <label>Category</label>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+  <div class="field">
+    <label>Note (optional)</label>
+    <input type="text" id="noteInput" placeholder="e.g. rickshaw to campus" maxlength="60">
+  </div>
+  <div class="field">
+    <label>Date</label>
+    <input type="date" id="dateInput">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="cancelAdd">Cancel</button>
+    <button class="btn btn-primary" id="saveAdd">Save entry</button>
+  </div>
+</div>
+
+<div class="sheet" id="incomeSheet">
+  <div class="sheet-handle"></div>
+  <h2>Add income</h2>
+  <div class="field">
+    <label>Amount</label>
+    <div class="amt-input-wrap">
+      <span class="cur"></span>
+      <input type="number" inputmode="decimal" id="incAmtInput" placeholder="0" min="0" step="0.01">
+    </div>
+  </div>
+  <div class="field">
+    <label>Source</label>
+    <div class="cat-grid source-grid" id="sourceGrid"></div>
+  </div>
+  <div class="field">
+    <label>Note (optional)</label>
+    <input type="text" id="incNoteInput" placeholder="e.g. July salary" maxlength="60">
+  </div>
+  <div class="field">
+    <label>Date</label>
+    <input type="date" id="incDateInput">
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="cancelIncome">Cancel</button>
+    <button class="btn btn-primary" id="saveIncome" style="background:var(--income);">Save income</button>
+  </div>
+</div>
+
+<div class="sheet" id="newTagSheet">
+  <div class="sheet-handle"></div>
+  <h2 id="newTagTitle">New category</h2>
+  <div class="field">
+    <label>Name</label>
+    <input type="text" id="newTagName" placeholder="e.g. Groceries" maxlength="20">
+  </div>
+  <div class="field">
+    <label>Icon</label>
+    <div class="emoji-grid" id="newTagEmojiGrid"></div>
+  </div>
+  <div class="field">
+    <label>Color</label>
+    <div class="swatch-grid" id="newTagSwatchGrid"></div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="cancelNewTag">Cancel</button>
+    <button class="btn btn-primary" id="saveNewTag">Save</button>
+  </div>
+</div>
+
+<div class="sheet" id="budgetSheet">
+  <div class="sheet-handle"></div>
+  <h2>Monthly budget</h2>
+  <div class="field">
+    <label>Overall limit for <span id="budgetMonthLabel"></span></label>
+    <div class="amt-input-wrap">
+      <span class="cur"></span>
+      <input type="number" inputmode="decimal" id="budgetInput" placeholder="e.g. 15000" min="0" step="1">
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn btn-ghost" id="cancelBudget">Cancel</button>
+    <button class="btn btn-primary" id="saveBudget">Save</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
